@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Domain
+Icon=signal-desktop
+Exec=/home/christian/Workspace/domain/target/release/domain
+Terminal=true
+Categories=Network;InstantMessaging;
+Keywords=sgnl;chat;im;messaging;messenger;sms;security;privat;
