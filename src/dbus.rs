@@ -43,7 +43,10 @@ impl Domain {
         self.get_initial_result_set(terms)
     }
 
-    fn get_result_metas(&self, str_ids: Vec<String>) -> Vec<HashMap<&'static str, zvariant::Value>> {
+    fn get_result_metas(
+        &self,
+        str_ids: Vec<String>,
+    ) -> Vec<HashMap<&'static str, zvariant::Value>> {
         let mut metas = Vec::with_capacity(str_ids.len());
 
         for str_id in str_ids {
@@ -77,7 +80,8 @@ impl Domain {
         let doc = self.get(id).unwrap().unwrap();
 
         let path = self
-            .folder_path
+            .config
+            .path
             .join(hex::encode(doc.hash))
             .with_extension(doc.extension);
 

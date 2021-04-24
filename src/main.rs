@@ -1,4 +1,5 @@
 mod backup;
+mod config;
 mod dbus;
 mod document;
 mod storage;
@@ -6,6 +7,7 @@ mod text;
 
 use std::path::PathBuf;
 
+use config::Config;
 use document::Document;
 use storage::{DocumentId, Storage, StorageResult};
 use text::Index;
@@ -13,12 +15,13 @@ use text::Index;
 struct Domain {
     storage: Storage,
     index: Index<3>,
-    folder_path: PathBuf,
+    config: Config,
 }
 
 impl Domain {
-    fn open(storage_path: &str) -> StorageResult<Self> {
-        let storage = Storage::open(storage_path)?;
+    fn open() -> StorageResult<Self> {
+        let config = Config::load().unwrap();
+        let storage = Storage::open(&config.path.join("storage/"))?;
         let mut index = Index::new();
 
         for result in storage.iter() {
@@ -29,7 +32,7 @@ impl Domain {
         Ok(Self {
             storage,
             index,
-            folder_path: std::env::var_os("DOMAIN_PATH").unwrap().into(),
+            config,
         })
     }
 
@@ -60,10 +63,12 @@ impl Domain {
 }
 
 fn main() {
-    let mut domain = Domain::open("test.domain").unwrap();
+    let mut domain = Domain::open().unwrap();
 
     for doc in backup::load("/home/christian/MEGAsync/Books/index.json").unwrap() {
-        domain.insert(&dbg!(doc)).unwrap();
+        if domain.insert(&dbg!(doc)).is_err() {
+            break;
+        }
     }
 
     dbus::serve(domain).unwrap();

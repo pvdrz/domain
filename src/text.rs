@@ -13,7 +13,7 @@ struct Gram<const N: usize>([u8; N]);
 impl<const N: usize> Gram<N> {
     fn iter_slice<'a>(slice: &'a [u8]) -> impl Iterator<Item = Self> + 'a {
         slice.windows(N).map(|bytes| {
-            let mut bytes = unsafe { *(bytes as *const [u8] as *const [u8;N]) };
+            let mut bytes = unsafe { *(bytes as *const [u8] as *const [u8; N]) };
             bytes.make_ascii_lowercase();
             Self(bytes)
         })

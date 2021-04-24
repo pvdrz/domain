@@ -35,7 +35,7 @@ pub struct Storage {
 }
 
 impl Storage {
-    pub fn open(path: &str) -> StorageResult<Self> {
+    pub fn open<P: AsRef<std::path::Path>>(path: &P) -> StorageResult<Self> {
         let db = sled::open(path)?;
         let document_tree = db.open_tree("documents")?;
         let hash_tree = db.open_tree("hashes")?;
