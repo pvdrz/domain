@@ -5,8 +5,6 @@ mod document;
 mod storage;
 mod text;
 
-use std::path::PathBuf;
-
 use config::Config;
 use document::Document;
 use storage::{DocumentId, Storage, StorageResult};
@@ -41,7 +39,8 @@ impl Domain {
     }
 
     fn search(&self, query: &str) -> Vec<DocumentId> {
-        dbg!(self.index.search::<5>(query.as_bytes()))
+        self.index
+            .search::<5>(query.as_bytes())
             .into_iter()
             .map(|(id, _)| id)
             .collect()

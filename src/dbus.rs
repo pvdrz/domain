@@ -13,13 +13,15 @@ const SERVER_PATH: &str = "/com/github/pvdrz/domain";
 pub(crate) fn serve(domain: Domain) -> fdo::Result<()> {
     let connection = Connection::new_session()?;
 
+    log::info!("Requesting server name.");
     fdo::DBusProxy::new(&connection)?
         .request_name(SERVER_NAME, fdo::RequestNameFlags::ReplaceExisting.into())?;
 
+    log::info!("Creating server path.");
     let mut object_server = ObjectServer::new(&connection);
     object_server.at(&SERVER_PATH.try_into().unwrap(), domain)?;
 
-    println!("looping");
+    log::info!("Server is up.");
     loop {
         object_server.try_handle_next()?;
     }
@@ -29,9 +31,13 @@ pub(crate) fn serve(domain: Domain) -> fdo::Result<()> {
 impl Domain {
     fn get_initial_result_set(&self, terms: Vec<&str>) -> Vec<String> {
         let query = terms.join(" ");
-        self.search(&dbg!(query))
+        log::info!("Received query \"{}\".", query);
+        self.search(&query)
             .into_iter()
-            .map(|DocumentId(bytes)| hex::encode(bytes))
+            .map(|id| {
+                log::info!("Document {} matches query.", id);
+                hex::encode(id.0)
+            })
             .collect()
     }
 
@@ -60,6 +66,8 @@ impl Domain {
                 Ok(None) | Err(_) => panic!(),
             };
 
+            log::info!("Retrieved metadata for document {}", id);
+
             let meta = {
                 let mut meta = HashMap::with_capacity(3);
                 meta.insert("id", str_id.into());
@@ -85,7 +93,8 @@ impl Domain {
             .join(hex::encode(doc.hash))
             .with_extension(doc.extension);
 
-        open::that(dbg!(path)).unwrap();
+        log::info!("Opening path \"{}\".", path.display());
+        open::that(path).unwrap();
     }
 
     fn launch_search(&self, _terms: Vec<&str>, _timestamp: u32) {}

@@ -26,6 +26,12 @@ impl From<bincode::Error> for StorageError {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct DocumentId(pub [u8; std::mem::size_of::<u64>()]);
 
+impl std::fmt::Display for DocumentId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        u64::from_be_bytes(self.0).fmt(f)
+    }
+}
+
 pub struct Storage {
     db: Db,
     /// StorageId => Document,
