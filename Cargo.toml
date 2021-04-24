@@ -14,6 +14,7 @@ hex = { version  = "*", features = ["serde"] }
 log = { version = "0.4.14" }
 serde = { version = "1.0.0", features = ["derive"] }
 serde_json = { version = "1.0.64" }
+structopt = { version = "0.3.21" }
 open = { version = "1.7.0" }
 sled = { version = "0.34.6" }
 toml = { version = "0.5.8" }

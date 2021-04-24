@@ -1,13 +1,16 @@
 mod backup;
+mod command;
 mod config;
 mod dbus;
 mod document;
 mod storage;
 mod text;
 
+use command::Command;
 use config::Config;
 use document::Document;
 use storage::{DocumentId, Storage, StorageResult};
+use structopt::StructOpt;
 use text::Index;
 
 struct Domain {
@@ -59,10 +62,17 @@ impl Domain {
 
         Ok(())
     }
+
+    fn execute(self, command: Command) {
+        match command {
+            Command::Serve => dbus::serve(self).unwrap(),
+        }
+    }
 }
 
 fn main() {
+    let command = Command::from_args();
     let domain = Domain::open().unwrap();
 
-    dbus::serve(domain).unwrap();
+    domain.execute(command)
 }
