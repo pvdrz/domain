@@ -63,13 +63,7 @@ impl Domain {
 }
 
 fn main() {
-    let mut domain = Domain::open().unwrap();
-
-    for doc in backup::load("/home/christian/MEGAsync/Books/index.json").unwrap() {
-        if domain.insert(&dbg!(doc)).is_err() {
-            break;
-        }
-    }
+    let domain = Domain::open().unwrap();
 
     dbus::serve(domain).unwrap();
 }
