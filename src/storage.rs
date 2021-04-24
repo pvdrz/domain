@@ -1,27 +1,7 @@
 use crate::document::Document;
 
+use anyhow::{anyhow, Context, Result};
 use sled::{Db, Tree};
-
-pub type StorageResult<T> = Result<T, StorageError>;
-
-#[derive(Debug)]
-pub enum StorageError {
-    Sled(sled::Error),
-    Bincode(bincode::Error),
-    DuplicatedHash(Box<[u8]>),
-}
-
-impl From<sled::Error> for StorageError {
-    fn from(err: sled::Error) -> Self {
-        Self::Sled(err)
-    }
-}
-
-impl From<bincode::Error> for StorageError {
-    fn from(err: bincode::Error) -> Self {
-        Self::Bincode(err)
-    }
-}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct DocumentId(pub [u8; std::mem::size_of::<u64>()]);
@@ -41,7 +21,7 @@ pub struct Storage {
 }
 
 impl Storage {
-    pub fn open<P: AsRef<std::path::Path>>(path: &P) -> StorageResult<Self> {
+    pub fn open<P: AsRef<std::path::Path>>(path: &P) -> Result<Self> {
         let db = sled::open(path)?;
         let document_tree = db.open_tree("documents")?;
         let hash_tree = db.open_tree("hashes")?;
@@ -53,18 +33,16 @@ impl Storage {
         })
     }
 
-    pub fn get(&self, DocumentId(id): DocumentId) -> StorageResult<Option<Document>> {
-        match self.document_tree.get(id)? {
+    pub fn get(&self, id: DocumentId) -> Result<Document> {
+        match self.document_tree.get(id.0)? {
             Some(bytes) => {
-                let document: Document = bincode::deserialize(&bytes)?;
-
-                Ok(Some(document))
+                bincode::deserialize::<Document>(&bytes).context("Could not deserialize document.")
             }
-            None => Ok(None),
+            None => Err(anyhow!("Document is not in storage.")),
         }
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = StorageResult<(DocumentId, Document)>> {
+    pub fn iter(&self) -> impl Iterator<Item = Result<(DocumentId, Document)>> {
         self.document_tree.iter().map(|res| {
             let (key, value) = res?;
 
@@ -76,11 +54,14 @@ impl Storage {
         })
     }
 
-    pub fn insert(&mut self, document: &Document) -> StorageResult<DocumentId> {
+    pub fn insert(&mut self, document: &Document) -> Result<DocumentId> {
         let hash = &document.hash;
 
         if self.hash_tree.contains_key(hash)? {
-            return Err(StorageError::DuplicatedHash(Box::new(hash.clone())));
+            anyhow!(
+                "File with hash {} has already been stored.",
+                hex::encode(hash)
+            );
         }
 
         let id = self.db.generate_id()?.to_be_bytes();
@@ -93,7 +74,7 @@ impl Storage {
         Ok(DocumentId(id))
     }
 
-    pub fn remove(&mut self, DocumentId(id): DocumentId) -> StorageResult<()> {
+    pub fn remove(&mut self, DocumentId(id): DocumentId) -> Result<()> {
         if let Some(bytes) = self.document_tree.remove(id)? {
             let document: Document = bincode::deserialize(&bytes)?;
             self.hash_tree.remove(document.hash)?;

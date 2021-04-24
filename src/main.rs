@@ -9,9 +9,11 @@ mod text;
 use command::Command;
 use config::Config;
 use document::Document;
-use storage::{DocumentId, Storage, StorageResult};
+use storage::{DocumentId, Storage};
 use structopt::StructOpt;
 use text::Index;
+
+use anyhow::{Context, Result};
 
 struct Domain {
     storage: Storage,
@@ -20,13 +22,13 @@ struct Domain {
 }
 
 impl Domain {
-    fn open() -> StorageResult<Self> {
-        let config = Config::load().unwrap();
+    fn open() -> Result<Self> {
+        let config = Config::load()?;
         let storage = Storage::open(&config.path.join("storage/"))?;
         let mut index = Index::new();
 
         for result in storage.iter() {
-            let (id, doc) = result?;
+            let (id, doc) = result.context("Could not index document.")?;
             index.insert(id, &doc);
         }
 
@@ -37,8 +39,10 @@ impl Domain {
         })
     }
 
-    fn get(&self, id: DocumentId) -> StorageResult<Option<Document>> {
-        self.storage.get(id)
+    fn get(&self, id: DocumentId) -> Result<Document> {
+        self.storage
+            .get(id)
+            .with_context(|| format!("Could not get document with ID: {}.", id))
     }
 
     fn search(&self, query: &str) -> Vec<DocumentId> {
@@ -49,30 +53,44 @@ impl Domain {
             .collect()
     }
 
-    fn insert(&mut self, document: &Document) -> StorageResult<DocumentId> {
-        let id = self.storage.insert(document)?;
+    fn insert(&mut self, document: &Document) -> Result<DocumentId> {
+        let id = self.storage.insert(document).with_context(|| {
+            format!(
+                "Could not insert document with hash: {}",
+                hex::encode(document.hash)
+            )
+        })?;
         self.index.insert(id, document);
 
         Ok(id)
     }
 
-    fn remove(&mut self, id: DocumentId) -> StorageResult<()> {
-        self.storage.remove(id)?;
+    fn remove(&mut self, id: DocumentId) -> Result<()> {
+        self.storage
+            .remove(id)
+            .with_context(|| format!("Could not remove document with ID: {}.", id))?;
         self.index.remove(id);
 
         Ok(())
     }
 
-    fn execute(self, command: Command) {
+    fn execute(self, command: Command) -> Result<()> {
         match command {
-            Command::Serve => dbus::serve(self).unwrap(),
+            Command::Serve => dbus::serve(self),
         }
     }
 }
 
-fn main() {
+fn run() -> Result<()> {
     let command = Command::from_args();
-    let domain = Domain::open().unwrap();
+    let domain = Domain::open()?;
 
     domain.execute(command)
+}
+
+fn main() {
+    match run() {
+        Ok(()) => (),
+        Err(err) => eprintln!("{:?}", err),
+    }
 }
