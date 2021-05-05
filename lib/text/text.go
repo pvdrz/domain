@@ -29,24 +29,24 @@ type scoreNum float32
 
 type countKey struct {
 	term term
-	id   doc.DocumentID
+	id   doc.DocID
 }
 
 type Index struct {
 	termCounts     map[countKey]countNum
 	documentCounts map[term]countNum
-	maxTermCounts  map[doc.DocumentID]countNum
+	maxTermCounts  map[doc.DocID]countNum
 }
 
 func NewIndex() Index {
 	return Index{
 		termCounts:     make(map[countKey]countNum),
 		documentCounts: make(map[term]countNum),
-		maxTermCounts:  make(map[doc.DocumentID]countNum),
+		maxTermCounts:  make(map[doc.DocID]countNum),
 	}
 }
 
-func (index *Index) Insert(id doc.DocumentID, document *doc.Document) {
+func (index *Index) Insert(id doc.DocID, document *doc.Doc) {
 	count := make(map[term]countNum)
 
 	f := func(term term) {
@@ -76,11 +76,11 @@ func (index *Index) Insert(id doc.DocumentID, document *doc.Document) {
 	index.maxTermCounts[id] = maxCount
 }
 
-func (index *Index) Search(query []byte) []doc.DocumentID {
+func (index *Index) Search(query []byte) []doc.DocID {
 	const Max = 5
 
 	var scores [Max]scoreNum
-	var matches [Max]doc.DocumentID
+	var matches [Max]doc.DocID
 	if len(query) < Max {
 		return matches[0:0]
 	}

@@ -38,7 +38,7 @@ func NewDomain() (Domain, error) {
 	}
 
 	index := text.NewIndex()
-	err = storage.ForEach(func(id doc.DocumentID, doc doc.Document) error {
+	err = storage.ForEach(func(id doc.DocID, doc doc.Doc) error {
 		index.Insert(id, &doc)
 		return nil
 	})
@@ -53,15 +53,15 @@ func NewDomain() (Domain, error) {
 	return domain, err
 }
 
-func (domain *Domain) Get(id doc.DocumentID) (doc.Document, error) {
+func (domain *Domain) Get(id doc.DocID) (doc.Doc, error) {
 	return domain.storage.Get(id)
 }
 
-func (domain *Domain) Search(query string) []doc.DocumentID {
+func (domain *Domain) Search(query string) []doc.DocID {
 	return domain.index.Search([]byte(query))
 }
 
-func (domain *Domain) Insert(document *doc.Document) (doc.DocumentID, error) {
+func (domain *Domain) Insert(document *doc.Doc) (doc.DocID, error) {
 	id, err := domain.storage.Insert(document)
 	if err != nil {
 		return id, err

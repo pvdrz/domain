@@ -8,7 +8,7 @@ import (
 	"strconv"
 )
 
-type Document struct {
+type Doc struct {
 	Title     string
 	Authors   []string
 	Keywords  []string
@@ -46,15 +46,15 @@ func (hash *Hash) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-type DocumentID [8]byte
+type DocID [8]byte
 
-func (id DocumentID) ToString() string {
+func (id DocID) ToString() string {
 	index := binary.BigEndian.Uint64(id[:])
 	return strconv.FormatUint(index, 10)
 }
 
-func DocumentIDFromString(str string) (DocumentID, error) {
-	var id DocumentID
+func DocIDFromString(str string) (DocID, error) {
+	var id DocID
 
 	index, err := strconv.ParseUint(str, 10, 64)
 	if err != nil {

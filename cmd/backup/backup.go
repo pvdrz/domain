@@ -7,10 +7,10 @@ import (
 )
 
 type backup struct {
-    Docs []doc.Document
+    Docs []doc.Doc
 };
 
-func LoadBackup(path string) ([]doc.Document, error) {
+func LoadBackup(path string) ([]doc.Doc, error) {
     var backup backup
 
     bytes, err := ioutil.ReadFile(path)
@@ -28,7 +28,7 @@ func LoadBackup(path string) ([]doc.Document, error) {
     return backup.Docs, nil
 }
 
-func DumpBackup(path string, docs []doc.Document) error {
+func DumpBackup(path string, docs []doc.Doc) error {
     bytes, err := json.Marshal(backup { Docs: docs })
 
     if err != nil {

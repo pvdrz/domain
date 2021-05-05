@@ -13,8 +13,8 @@ type Storage struct {
 	db *bolt.DB
 }
 
-func nextID(bucket *bolt.Bucket) (doc.DocumentID, error) {
-    var id doc.DocumentID
+func nextID(bucket *bolt.Bucket) (doc.DocID, error) {
+    var id doc.DocID
 
     index, err := bucket.NextSequence()
     if err != nil {
@@ -49,8 +49,8 @@ func OpenStorage(path string) (Storage, error) {
 	return storage, err
 }
 
-func (storage *Storage) Insert(document *doc.Document) (doc.DocumentID, error) {
-	var id doc.DocumentID
+func (storage *Storage) Insert(document *doc.Doc) (doc.DocID, error) {
+	var id doc.DocID
 
 	err := storage.db.Update(func(tx *bolt.Tx) error {
 		hash := document.Hash[:]
@@ -86,8 +86,8 @@ func (storage *Storage) Insert(document *doc.Document) (doc.DocumentID, error) {
 	return id, err
 }
 
-func (storage *Storage) Get(id doc.DocumentID) (doc.Document, error) {
-	var document doc.Document
+func (storage *Storage) Get(id doc.DocID) (doc.Doc, error) {
+	var document doc.Doc
 
 	err := storage.db.View(func(tx *bolt.Tx) error {
 		documents := tx.Bucket([]byte("documents"))
@@ -102,15 +102,15 @@ func (storage *Storage) Get(id doc.DocumentID) (doc.Document, error) {
 	return document, err
 }
 
-func (storage *Storage) ForEach(f func(doc.DocumentID, doc.Document) error) error {
+func (storage *Storage) ForEach(f func(doc.DocID, doc.Doc) error) error {
 	return storage.db.View(func(tx *bolt.Tx) error {
 		documents := tx.Bucket([]byte("documents"))
 
 		return documents.ForEach(func(bytesID []byte, bytesDoc []byte) error {
-			var id doc.DocumentID
+			var id doc.DocID
             copy(id[:], bytesID)
 
-			var document doc.Document
+			var document doc.Doc
 			buf := bytes.NewBuffer(bytesDoc)
 			dec := gob.NewDecoder(buf)
 			err := dec.Decode(&document)

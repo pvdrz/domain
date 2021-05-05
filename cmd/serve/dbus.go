@@ -91,7 +91,7 @@ func getResultMetas(domain *Domain, strIDs []string) ([]map[string]dbus.Variant,
 	metas := make([]map[string]dbus.Variant, len(strIDs))
 
 	for i, strID := range strIDs {
-		id, err := doc.DocumentIDFromString(strID)
+		id, err := doc.DocIDFromString(strID)
 		if err != nil {
 			return metas, err
 		}
@@ -113,7 +113,7 @@ func getResultMetas(domain *Domain, strIDs []string) ([]map[string]dbus.Variant,
 }
 
 func activateResult(domain *Domain, strID string, _ []string, _ uint32) error {
-	id, err := doc.DocumentIDFromString(strID)
+	id, err := doc.DocIDFromString(strID)
 	if err != nil {
 		return err
 	}
