@@ -4,7 +4,7 @@ import (
     "path"
 	config "github.com/pvdrz/domain"
 	"github.com/pvdrz/domain/lib/doc"
-	"github.com/pvdrz/domain/lib/storage"
+	"github.com/pvdrz/domain/lib/db"
 	"github.com/pvdrz/domain/lib/text"
 )
 
@@ -18,7 +18,7 @@ func main() {
 }
 
 type Domain struct {
-	storage storage.Storage
+	db db.DB
 	index   text.Index
 	config  config.Config
 }
@@ -31,14 +31,14 @@ func NewDomain() (Domain, error) {
 		return domain, err
 	}
 
-	storagePath := path.Join(config.Path, "db")
-	storage, err := storage.OpenStorage(storagePath)
+	dbPath := path.Join(config.Path, "db")
+	db, err := db.OpenDB(dbPath)
 	if err != nil {
 		return domain, err
 	}
 
 	index := text.NewIndex()
-	err = storage.ForEach(func(id doc.DocID, doc doc.Doc) error {
+	err = db.ForEach(func(id doc.DocID, doc doc.Doc) error {
 		index.Insert(id, &doc)
 		return nil
 	})
@@ -46,7 +46,7 @@ func NewDomain() (Domain, error) {
 		return domain, err
 	}
 
-	domain.storage = storage
+	domain.db = db
 	domain.index = index
 	domain.config = config
 
@@ -54,7 +54,7 @@ func NewDomain() (Domain, error) {
 }
 
 func (domain *Domain) Get(id doc.DocID) (doc.Doc, error) {
-	return domain.storage.Get(id)
+	return domain.db.Get(id)
 }
 
 func (domain *Domain) Search(query string) []doc.DocID {
@@ -62,7 +62,7 @@ func (domain *Domain) Search(query string) []doc.DocID {
 }
 
 func (domain *Domain) Insert(document *doc.Doc) (doc.DocID, error) {
-	id, err := domain.storage.Insert(document)
+	id, err := domain.db.Insert(document)
 	if err != nil {
 		return id, err
 	}
