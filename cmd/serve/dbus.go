@@ -6,8 +6,8 @@ import (
 	"path"
 	"strings"
 
-    "github.com/pvdrz/domain/lib/doc"
 	"github.com/godbus/dbus/v5"
+	"github.com/pvdrz/domain/lib/doc"
 	"github.com/skratchdot/open-golang/open"
 )
 
@@ -21,43 +21,7 @@ func ServeDbus(domain Domain) error {
 	}
 	defer conn.Close()
 
-	methods := make(map[string]interface{}, 5)
-	methods["GetInitialResultSet"] = func(terms []string) ([]string, *dbus.Error) {
-		result, err := getInitialResultSet(&domain, terms)
-		if err != nil {
-			return result, dbus.MakeFailedError(err)
-		}
-		return result, nil
-	}
-	methods["GetSubsearchResultSet"] = func(previousResults []string, terms []string) ([]string, *dbus.Error) {
-		result, err := getSubsearchResultSet(&domain, previousResults, terms)
-		if err != nil {
-			return result, dbus.MakeFailedError(err)
-		}
-		return result, nil
-	}
-	methods["GetResultMetas"] = func(identifiers []string) ([]map[string]dbus.Variant, *dbus.Error) {
-		result, err := getResultMetas(&domain, identifiers)
-		if err != nil {
-			return result, dbus.MakeFailedError(err)
-		}
-		return result, nil
-	}
-	methods["ActivateResult"] = func(identifier string, terms []string, timestamp uint32) *dbus.Error {
-		err := activateResult(&domain, identifier, terms, timestamp)
-		if err != nil {
-			return dbus.MakeFailedError(err)
-		}
-		return nil
-	}
-	methods["LaunchSearch"] = func(terms []string, timestamp uint32) *dbus.Error {
-		err := launchSearch(&domain, terms, timestamp)
-		if err != nil {
-			return dbus.MakeFailedError(err)
-		}
-		return nil
-	}
-	conn.ExportMethodTable(methods, serverPath, "org.gnome.Shell.SearchProvider2")
+	conn.Export(&domain, serverPath, "org.gnome.Shell.SearchProvider2")
 
 	reply, err := conn.RequestName(serverName, dbus.NameFlagDoNotQueue)
 	if err != nil {
@@ -71,9 +35,9 @@ func ServeDbus(domain Domain) error {
 	select {}
 }
 
-func getInitialResultSet(domain *Domain, terms []string) ([]string, error) {
+func (domain *Domain) GetInitialResultSet(terms []string) ([]string, *dbus.Error) {
 	query := strings.Join(terms, " ")
-	ids := domain.Search(query)
+	ids := domain.search(query)
 
 	results := make([]string, len(ids))
 	for i, id := range ids {
@@ -83,22 +47,22 @@ func getInitialResultSet(domain *Domain, terms []string) ([]string, error) {
 	return results, nil
 }
 
-func getSubsearchResultSet(domain *Domain, _ []string, terms []string) ([]string, error) {
-	return getInitialResultSet(domain, terms)
+func (domain *Domain) GetSubsearchResultSet(_ []string, terms []string) ([]string, *dbus.Error) {
+	return domain.GetInitialResultSet(terms)
 }
 
-func getResultMetas(domain *Domain, strIDs []string) ([]map[string]dbus.Variant, error) {
+func (domain *Domain) GetResultMetas(strIDs []string) ([]map[string]dbus.Variant, *dbus.Error) {
 	metas := make([]map[string]dbus.Variant, len(strIDs))
 
 	for i, strID := range strIDs {
 		id, err := doc.DocIDFromString(strID)
 		if err != nil {
-			return metas, err
+			return metas, dbus.MakeFailedError(err)
 		}
 
-		doc, err := domain.Get(id)
+		doc, err := domain.get(id)
 		if err != nil {
-			return metas, err
+			return metas, dbus.MakeFailedError(err)
 		}
 
 		meta := make(map[string]dbus.Variant, 3)
@@ -112,22 +76,27 @@ func getResultMetas(domain *Domain, strIDs []string) ([]map[string]dbus.Variant,
 	return metas, nil
 }
 
-func activateResult(domain *Domain, strID string, _ []string, _ uint32) error {
+func (domain *Domain) ActivateResult(strID string, _ []string, _ uint32) *dbus.Error {
 	id, err := doc.DocIDFromString(strID)
 	if err != nil {
-		return err
+		return dbus.MakeFailedError(err)
 	}
 
-	doc, err := domain.Get(id)
+	doc, err := domain.get(id)
 	if err != nil {
-		return err
+		return dbus.MakeFailedError(err)
 	}
 
 	filename := hex.EncodeToString(doc.Hash[:]) + "." + doc.Extension
 	path := path.Join(domain.config.Path, filename)
-	return open.Start(path)
+	err = open.Start(path)
+	if err != nil {
+		return dbus.MakeFailedError(err)
+	}
+
+	return nil
 }
 
-func launchSearch(domain *Domain, _ []string, _ uint32) error {
+func (domain *Domain) LaunchSearch(_ []string, _ uint32) *dbus.Error {
 	return nil
 }

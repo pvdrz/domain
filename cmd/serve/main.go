@@ -53,15 +53,15 @@ func NewDomain() (Domain, error) {
 	return domain, err
 }
 
-func (domain *Domain) Get(id doc.DocID) (doc.Doc, error) {
+func (domain *Domain) get(id doc.DocID) (doc.Doc, error) {
 	return domain.db.Get(id)
 }
 
-func (domain *Domain) Search(query string) []doc.DocID {
+func (domain *Domain) search(query string) []doc.DocID {
 	return domain.index.Search([]byte(query))
 }
 
-func (domain *Domain) Insert(document *doc.Doc) (doc.DocID, error) {
+func (domain *Domain) insert(document *doc.Doc) (doc.DocID, error) {
 	id, err := domain.db.Insert(document)
 	if err != nil {
 		return id, err
