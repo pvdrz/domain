@@ -1,4 +1,4 @@
-package domain
+package cmd
 
 import (
 	"io/ioutil"
@@ -7,12 +7,16 @@ import (
 	"github.com/pelletier/go-toml"
 )
 
-type Config struct {
+type config struct {
 	Path string
 }
 
-func OpenConfig() (Config, error) {
-	var config Config
+func (config *config) pathDB() string {
+	return path.Join(config.Path, "db")
+}
+
+func openConfig() (config, error) {
+	var config config
 
     userConfigPath, err := os.UserConfigDir()
 	if err != nil {

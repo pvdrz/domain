@@ -26,13 +26,11 @@ func (hash *Hash) UnmarshalJSON(data []byte) error {
 	var str string
 
 	err := json.Unmarshal(data, &str)
-
 	if err != nil {
 		return err
 	}
 
 	bytes, err := hex.DecodeString(str)
-
 	if err != nil {
 		return err
 	}
@@ -41,7 +39,7 @@ func (hash *Hash) UnmarshalJSON(data []byte) error {
 		return errors.New("Hash of document does not have length 32")
 	}
 
-	copy(hash[0:32], bytes)
+	copy(hash[:], bytes)
 
 	return nil
 }

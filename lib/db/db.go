@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/gob"
-	"errors"
-    "github.com/pvdrz/domain/lib/doc"
+	"encoding/hex"
+	"fmt"
+
+	"github.com/pvdrz/domain/lib/doc"
 	bolt "go.etcd.io/bbolt"
 )
 
@@ -14,16 +16,16 @@ type DB struct {
 }
 
 func nextID(bucket *bolt.Bucket) (doc.DocID, error) {
-    var id doc.DocID
+	var id doc.DocID
 
-    index, err := bucket.NextSequence()
-    if err != nil {
-        return id, err
-    }
+	index, err := bucket.NextSequence()
+	if err != nil {
+		return id, err
+	}
 
-    binary.BigEndian.PutUint64(id[:], index)
+	binary.BigEndian.PutUint64(id[:], index)
 
-    return id, nil
+	return id, nil
 }
 
 func OpenDB(path string) (DB, error) {
@@ -57,7 +59,8 @@ func (db *DB) Insert(document *doc.Doc) (doc.DocID, error) {
 
 		hashes := tx.Bucket([]byte("hashes"))
 		if hashes.Get(hash) != nil {
-			return errors.New("duplicated hash")
+			sHash := hex.EncodeToString(hash)
+			return fmt.Errorf("the document with title \"%s\" cannot be inserted because the hash \"%s\" is already in the database", document.Title, sHash)
 		}
 
 		documents := tx.Bucket([]byte("documents"))
@@ -68,7 +71,7 @@ func (db *DB) Insert(document *doc.Doc) (doc.DocID, error) {
 
 		id = newID
 
-        err = hashes.Put(hash, id[:])
+		err = hashes.Put(hash, id[:])
 		if err != nil {
 			return err
 		}
@@ -92,7 +95,7 @@ func (db *DB) Get(id doc.DocID) (doc.Doc, error) {
 	err := db.inner.View(func(tx *bolt.Tx) error {
 		documents := tx.Bucket([]byte("documents"))
 
-        bytesDoc := documents.Get(id[:])
+		bytesDoc := documents.Get(id[:])
 		buf := bytes.NewBuffer(bytesDoc)
 		dec := gob.NewDecoder(buf)
 		return dec.Decode(&document)
@@ -108,7 +111,7 @@ func (db *DB) ForEach(f func(doc.DocID, doc.Doc) error) error {
 
 		return documents.ForEach(func(bytesID []byte, bytesDoc []byte) error {
 			var id doc.DocID
-            copy(id[:], bytesID)
+			copy(id[:], bytesID)
 
 			var document doc.Doc
 			buf := bytes.NewBuffer(bytesDoc)
