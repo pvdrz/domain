@@ -1,0 +1,8 @@
+[Unit]
+Description=Domain Server Daemon
+
+[Service]
+ExecStart=domain serve
+
+[Install]
+WantedBy=default.target
