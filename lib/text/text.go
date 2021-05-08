@@ -2,8 +2,9 @@ package text
 
 import (
 	"bytes"
-	"github.com/pvdrz/domain/lib/doc"
 	"math"
+
+	"github.com/pvdrz/domain/lib/doc"
 )
 
 const termSize = 3
@@ -14,7 +15,7 @@ func forEachTerm(slice []byte, f func(term)) {
 	slice = bytes.ToLower(slice)
 	pos := 0
 
-	for pos+termSize < len(slice) {
+	for pos+termSize <= len(slice) {
 		var term term
 		copy(term[:], slice[pos:pos+termSize])
 
@@ -81,7 +82,7 @@ func (index *Index) Search(query []byte) []doc.DocID {
 
 	var scores [Max]scoreNum
 	var matches [Max]doc.DocID
-	if len(query) < Max {
+	if len(query) < termSize {
 		return matches[0:0]
 	}
 
