@@ -205,6 +205,8 @@ func (server *server) AddDocument(path string, title string, authors []string, k
 	ext := filepath.Ext(path)
 	if ext == "" {
 		return dbus.MakeFailedError(fmt.Errorf("file has no extension"))
+	} else {
+		ext = ext[1:]
 	}
 
 	bytes, err := ioutil.ReadFile(path)
@@ -221,7 +223,7 @@ func (server *server) AddDocument(path string, title string, authors []string, k
 		Hash:      hash,
 	}
 
-    filename := hex.EncodeToString(hash[:]) + "." + ext
+	filename := hex.EncodeToString(hash[:]) + "." + ext
 	newPath := server.config.pathFile(filename)
 
 	docID, err := server.insert(&doc)
