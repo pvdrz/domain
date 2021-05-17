@@ -101,8 +101,8 @@ func (server *server) get(id doc.DocID) (doc.Doc, error) {
 	return server.db.Get(id)
 }
 
-func (server *server) search(query string) []doc.DocID {
-	return server.index.Search([]byte(query))
+func (server *server) search(query []string) []doc.DocID {
+	return server.index.Search(query)
 }
 
 func (server *server) insert(document *doc.Doc) (doc.DocID, error) {
@@ -128,18 +128,16 @@ func (server *server) delete(id doc.DocID) error {
 }
 
 func (server *server) GetInitialResultSet(terms []string) ([]string, *dbus.Error) {
-	query := strings.Join(terms, " ")
+	log.Printf("Received query \"%s\".\n", terms)
 
-	log.Printf("Received query \"%s\".\n", query)
-
-	ids := server.search(query)
+	ids := server.search(terms)
 
 	results := make([]string, len(ids))
 	for i, id := range ids {
 		results[i] = id.ToString()
 	}
 
-	log.Printf("Found %d results for query \"%s\".\n", len(results), query)
+	log.Printf("Found %d results for query \"%s\".\n", len(results), terms)
 
 	return results, nil
 }

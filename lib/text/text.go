@@ -1,8 +1,8 @@
 package text
 
 import (
-	"bytes"
 	"math"
+	"strings"
 
 	"github.com/pvdrz/domain/lib/doc"
 )
@@ -12,7 +12,6 @@ const termSize = 3
 type term [termSize]byte
 
 func forEachTerm(slice []byte, f func(term)) {
-	slice = bytes.ToLower(slice)
 	pos := 0
 
 	for pos+termSize <= len(slice) {
@@ -54,12 +53,12 @@ func (index *Index) Insert(id doc.DocID, document *doc.Doc) {
 		count[term] += 1
 	}
 
-	forEachTerm([]byte(document.Title), f)
+	forEachTerm([]byte(strings.ToLower(document.Title)), f)
 	for _, author := range document.Authors {
-		forEachTerm([]byte(author), f)
+		forEachTerm([]byte(strings.ToLower(author)), f)
 	}
 	for _, keyword := range document.Keywords {
-		forEachTerm([]byte(keyword), f)
+		forEachTerm([]byte(strings.ToLower(keyword)), f)
 	}
 
 	maxCount := countNum(0)
@@ -77,17 +76,14 @@ func (index *Index) Insert(id doc.DocID, document *doc.Doc) {
 	index.maxTermCounts[id] = maxCount
 }
 func (index *Index) Delete(id doc.DocID) {
-    delete(index.maxTermCounts, id)
+	delete(index.maxTermCounts, id)
 }
 
-func (index *Index) Search(query []byte) []doc.DocID {
+func (index *Index) Search(query []string) []doc.DocID {
 	const Max = 5
 
 	var scores [Max]scoreNum
 	var matches [Max]doc.DocID
-	if len(query) < termSize {
-		return matches[0:0]
-	}
 
 	total := scoreNum(len(index.maxTermCounts))
 	foundCount := 0
@@ -96,15 +92,17 @@ func (index *Index) Search(query []byte) []doc.DocID {
 		maxCount := scoreNum(maxCount)
 		score := scoreNum(0.0)
 
-		forEachTerm(query, func(term term) {
-			termCount := index.termCounts[countKey{term: term, id: id}]
-			docCount := index.documentCounts[term]
+		for _, query := range query {
+			forEachTerm([]byte(strings.ToLower(query)), func(term term) {
+				termCount := index.termCounts[countKey{term: term, id: id}]
+				docCount := index.documentCounts[term]
 
-			tf := 0.5 + 0.5*(scoreNum(termCount)/maxCount)
-			idf := scoreNum(math.Log(float64(total / scoreNum(docCount))))
+				tf := 0.5 + 0.5*(scoreNum(termCount)/maxCount)
+				idf := scoreNum(math.Log(float64(total / scoreNum(docCount))))
 
-			score += tf * idf
-		})
+				score += tf * idf
+			})
+		}
 
 		for pos := 0; pos < Max; pos += 1 {
 			if score > scores[pos] {
