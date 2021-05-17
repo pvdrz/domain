@@ -105,6 +105,14 @@ func (db *DB) Get(id doc.DocID) (doc.Doc, error) {
 	return document, err
 }
 
+func (db *DB) Delete(id doc.DocID) error {
+	return db.inner.Update(func(tx *bolt.Tx) error {
+		documents := tx.Bucket([]byte("documents"))
+
+		return documents.Delete(id[:])
+	})
+}
+
 func (db *DB) ForEach(f func(doc.DocID, doc.Doc) error) error {
 	return db.inner.View(func(tx *bolt.Tx) error {
 		documents := tx.Bucket([]byte("documents"))

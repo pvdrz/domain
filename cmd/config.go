@@ -1,10 +1,10 @@
 package cmd
 
 import (
-	"io/ioutil"
-    "path"
-    "os"
 	"github.com/pelletier/go-toml"
+	"io/ioutil"
+	"os"
+	"path"
 )
 
 type config struct {
@@ -15,15 +15,19 @@ func (config *config) pathDB() string {
 	return path.Join(config.Path, "db")
 }
 
+func (config *config) pathFile(filename string) string {
+	return path.Join(config.Path, filename)
+}
+
 func openConfig() (config, error) {
 	var config config
 
-    userConfigPath, err := os.UserConfigDir()
+	userConfigPath, err := os.UserConfigDir()
 	if err != nil {
 		return config, err
 	}
 
-    configPath := path.Join(userConfigPath, "domain", "config.toml")
+	configPath := path.Join(userConfigPath, "domain", "config.toml")
 
 	bytes, err := ioutil.ReadFile(configPath)
 	if err != nil {
@@ -35,12 +39,12 @@ func openConfig() (config, error) {
 		return config, err
 	}
 
-    homePath, err := os.UserHomeDir()
+	homePath, err := os.UserHomeDir()
 	if err != nil {
 		return config, err
 	}
 
-    config.Path = path.Join(homePath, config.Path)
+	config.Path = path.Join(homePath, config.Path)
 
 	return config, nil
 }

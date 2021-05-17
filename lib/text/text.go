@@ -76,6 +76,9 @@ func (index *Index) Insert(id doc.DocID, document *doc.Doc) {
 
 	index.maxTermCounts[id] = maxCount
 }
+func (index *Index) Delete(id doc.DocID) {
+    delete(index.maxTermCounts, id)
+}
 
 func (index *Index) Search(query []byte) []doc.DocID {
 	const Max = 5

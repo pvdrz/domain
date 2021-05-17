@@ -8,4 +8,5 @@ require (
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/spf13/cobra v1.1.3 // indirect
 	go.etcd.io/bbolt v1.3.5
+	lukechampine.com/blake3 v1.1.5 // indirect
 )
