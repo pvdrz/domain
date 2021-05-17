@@ -105,7 +105,7 @@ func loadBackup(path string) ([]doc.Doc, error) {
 }
 
 func saveBackup(path string, docs []doc.Doc) error {
-	bytes, err := json.Marshal(backup{Docs: docs})
+	bytes, err := json.MarshalIndent(backup{Docs: docs}, "", "  ")
 	if err != nil {
 		return err
 	}

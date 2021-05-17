@@ -18,4 +18,5 @@ func init() {
     rootCmd.AddCommand(serveCmd)
     rootCmd.AddCommand(loadCmd)
     rootCmd.AddCommand(saveCmd)
+    rootCmd.AddCommand(addCmd)
 }
